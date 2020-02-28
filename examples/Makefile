@@ -1,4 +1,4 @@
 all: helloworld
 
 helloworld: helloworld.cc
-	g++ -I .. -o helloworld helloworld.cc 
+	g++ -I ../build/include	 -o helloworld helloworld.cc 
