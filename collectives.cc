@@ -1,5 +1,5 @@
 #include <torch/extension.h>
-#include <nccl.h>
+#include "src/nccl.h"
 
 #define CHECK_CUDA(x) TORCH_CHECK(x.type().is_cuda(), #x " must be a CUDA tensor")
 #define CHECK_CONTIGUOUS(x) TORCH_CHECK(x.is_contiguous(), #x " must be contiguous")
@@ -11,7 +11,7 @@ void init() {
     int nDev = 4;
     int size = 32*1024*1024;
     int devs[4] = { 0, 1, 2, 3 };
-    ncclCommInitAll(comms, nDev, devs);
+    /*ncclCommInitAll(comms, nDev, devs);*/
 }
 
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
