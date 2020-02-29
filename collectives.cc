@@ -5,16 +5,27 @@
 #define CHECK_CONTIGUOUS(x) TORCH_CHECK(x.is_contiguous(), #x " must be contiguous")
 #define CHECK_INPUT(x) CHECK_CUDA(x); CHECK_CONTIGUOUS(x)
 
-void init() {
-    ncclComm_t comms[4];
-    //managing 4 devices
-    int nDev = 4;
-    int size = 32*1024*1024;
-    int devs[4] = { 0, 1, 2, 3 };
-    ncclCommInitAll(comms, nDev, devs);
+#define NCCLCHECK(cmd) do {                         \
+  ncclResult_t r = cmd;                             \
+  if (r!= ncclSuccess) {                            \
+    printf("Failed, NCCL error %s:%d '%s'\n",             \
+        __FILE__,__LINE__,ncclGetErrorString(r));   \
+    exit(EXIT_FAILURE);                             \
+  }                                                 \
+} while(0)
+
+
+void init(int nDev) {
+    ncclComm_t comms[nDev];
+    //int size = 32*1024*1024;
+    int devs[nDev];
+    for(int i = 0; i < nDev; ++i) {
+        devs[i] = i;
+    }
+    NCCLCHECK(ncclCommInitAll(comms, nDev, devs));
     /*ncclCommInitAll(comms, nDev, devs);*/
 }
 
 PYBIND11_MODULE("nccl", m) {
-  m.def("init", &init, "LLTM forward (CUDA)");
+  m.def("init", &init, "init");
 }
