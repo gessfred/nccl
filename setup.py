@@ -4,9 +4,7 @@ from torch.utils.cpp_extension import BuildExtension, CUDAExtension
 setup(
     name='lltm',
     ext_modules=[
-        CUDAExtension('lltm_cuda', [
-            'collectives.cc'
-        ])
+        CUDAExtension(name='nccl', sources=['collectives.cc'],include_dirs=['../build/include'], library_dirs=['../build/lib'])
     ],
     cmdclass={
         'build_ext': BuildExtension
