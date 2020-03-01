@@ -26,6 +26,6 @@ void init(int nDev) {
     /*ncclCommInitAll(comms, nDev, devs);*/
 }
 
-PYBIND11_MODULE("nccl", m) {
+PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
   m.def("init", &init, "init");
 }
