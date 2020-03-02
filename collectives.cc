@@ -8,14 +8,7 @@
 #define CHECK_CONTIGUOUS(x) TORCH_CHECK(x.is_contiguous(), #x " must be contiguous")
 #define CHECK_INPUT(x) CHECK_CUDA(x); CHECK_CONTIGUOUS(x)
 
-#define MPICHECK(cmd) do {                          \
-  int e = cmd;                                      \
-  if( e != MPI_SUCCESS ) {                          \
-    printf("Failed: MPI error %s:%d '%d'\n",        \
-        __FILE__,__LINE__, e);   \
-    exit(EXIT_FAILURE);                             \
-  }                                                 \
-} while(0)
+#define MPICHECK
 
 
 #define CUDACHECK(cmd) do {                         \
@@ -56,7 +49,7 @@ static void getHostName(char* hostname, int maxlen) {
   }
 }
 
-void allreduce()
+void allreduce(int rank)
 {
   int size = 32*1024*1024;
 
@@ -71,7 +64,7 @@ void allreduce()
   MPICHECK(MPI_Comm_size(MPI_COMM_WORLD, &nRanks));
 
 
-  //calculating localRank based on hostname which is used in selecting a GPU
+  /*//calculating localRank based on hostname which is used in selecting a GPU
   uint64_t hostHashs[nRanks];
   char hostname[1024];
   getHostName(hostname, 1024);
@@ -125,7 +118,7 @@ void allreduce()
 
   //finalizing MPI
   MPICHECK(MPI_Finalize());
-
+*/
 
   printf("[MPI Rank %d] Success \n", myRank);
 }
