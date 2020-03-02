@@ -142,29 +142,6 @@ void init(int nDev) {
     NCCLCHECK(ncclCommInitAll(comms, nDev, devs));
 }
 
-void allgather(torch::Tensor tensor, int nDev) {
-  //allocating and initializing device buffers
-  float** sendbuff = (float**)malloc(nDev * sizeof(float*));
-  float** recvbuff = (float**)malloc(nDev * sizeof(float*));
-  cudaStream_t* s = (cudaStream_t*)malloc(sizeof(cudaStream_t)*nDev);
-
-
-  for (int i = 0; i < nDev; ++i) {
-    CUDACHECK(cudaSetDevice(i));
-    CUDACHECK(cudaMalloc(sendbuff + i, size * sizeof(float)));
-    CUDACHECK(cudaMalloc(recvbuff + i, size * sizeof(float)));
-    CUDACHECK(cudaMemset(sendbuff[i], 1, size * sizeof(float)));
-    CUDACHECK(cudaMemset(recvbuff[i], 0, size * sizeof(float)));
-    CUDACHECK(cudaStreamCreate(s+i));
-  }
-
-
-  //initializing NCCL
-  NCCLCHECK(ncclCommInitAll(comms, nDev, devs));
-
-
-
-}
 
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
   m.def("init", &init, "init");
