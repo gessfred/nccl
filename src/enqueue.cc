@@ -287,9 +287,9 @@ static ncclResult_t getPatternInfo(struct ncclInfo* info) {
       info->pattern = ncclPatternRing; break;
     case ncclCollAllReduce:
       info->pattern = info->algorithm == NCCL_ALGO_TREE ? ncclPatternTreeUpDown : ncclPatternRingTwice; break;
-    case ncclCollSend:
-    case ncclCollRecv:
-      return ncclSuccess;
+    //case ncclCollSend:
+    //case ncclCollRecv:
+    //  return ncclSuccess;
     default:
       WARN("Unknown pattern for collective %d algorithm %d", info->coll, info->algorithm);
       return ncclInternalError;
@@ -299,9 +299,9 @@ static ncclResult_t getPatternInfo(struct ncclInfo* info) {
 
 static ncclResult_t getLoopInfo(struct ncclInfo* info) {
   switch (info->pattern) {
-    case ncclCollSend:
-    case ncclCollRecv:
-      return ncclSuccess;
+    //case ncclCollSend:
+    //case ncclCollRecv:
+    //  return ncclSuccess;
     case ncclPatternTreeUp:
     case ncclPatternTreeDown:
     case ncclPatternTreeUpDown:
