@@ -51,7 +51,7 @@ static __inline__ int ncclTypeSize(ncclDataType_t type) {
 }
 
 #define NCCL_NUM_FUNCTIONS 5
-typedef enum { ncclCollBroadcast, ncclCollReduce, ncclCollAllGather, ncclCollReduceScatter, ncclCollAllReduce } ncclFunc_t;
+typedef enum { ncclCollBroadcast, ncclCollReduce, ncclCollAllGather, ncclCollReduceScatter, ncclCollAllReduce, ncclCollSend, ncclCollRecv } ncclFunc_t;
 
 #define NCCL_NUM_ALGORITHMS 2 // Tree/Ring
 #define NCCL_ALGO_TREE 0
