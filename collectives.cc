@@ -47,7 +47,7 @@ static void getHostName(char* hostname, int maxlen) {
   }
 }
 
-void allreduce(int rank, int nRanks)
+void allreduce(int rank, int nRanks, std::array<char, 128> uuid)
 {
   int size = 32*1024*1024;
 
@@ -68,8 +68,9 @@ void allreduce(int rank, int nRanks)
   std::cout << hostname << std::endl;
 
   //get NCCL unique ID at rank 0 and broadcast it to all others
-  if (myRank == 0) ncclGetUniqueId(&id);
-  std::cout << std::string(id.internal) << std::endl;
+  std::copy_n(uuid.begin(), 128, std::begin(id.internal));  
+//if (myRank == 0) ncclGetUniqueId(&id);
+  //std::cout << std::string(id.internal) << std::endl;
   //picking a GPU based on localRank, allocate device buffers
   CUDACHECK(cudaSetDevice(localRank));
   CUDACHECK(cudaMalloc(&sendbuff, size * sizeof(float)));
@@ -103,9 +104,12 @@ void allreduce(int rank, int nRanks)
 }
 
 std::array<char, 128> get_local_id() {
+  std::array<char, 128> res;
   ncclUniqueId id;
   ncclGetUniqueId(&id);
-  return reinterpret_cast<std::array<char, 128>>(id.internal);
+  std::copy_n(std::begin(id.internal), 128, res.begin());
+  return res;
+  //return reinterpret_cast<std::array<char, 128>&>(id.internal);
 }
 
 //ncclGetErrorString
