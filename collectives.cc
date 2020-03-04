@@ -3,7 +3,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <unistd.h>
-
+#include <string>
 #define CHECK_CUDA(x) TORCH_CHECK(x.type().is_cuda(), #x " must be a CUDA tensor")
 #define CHECK_CONTIGUOUS(x) TORCH_CHECK(x.is_contiguous(), #x " must be contiguous")
 #define CHECK_INPUT(x) CHECK_CUDA(x); CHECK_CONTIGUOUS(x)
@@ -68,7 +68,7 @@ void allreduce(int rank, int nRanks)
 
   //get NCCL unique ID at rank 0 and broadcast it to all others
   if (myRank == 0) ncclGetUniqueId(&id);
-  std::cout << id << std::endl;
+  std::cout << std::string(id.internal) << std::endl;
   //picking a GPU based on localRank, allocate device buffers
   CUDACHECK(cudaSetDevice(localRank));
   CUDACHECK(cudaMalloc(&sendbuff, size * sizeof(float)));
