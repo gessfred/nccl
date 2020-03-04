@@ -4,6 +4,7 @@
 #include <iostream>
 #include <unistd.h>
 #include <string>
+#include <array>
 #define CHECK_CUDA(x) TORCH_CHECK(x.type().is_cuda(), #x " must be a CUDA tensor")
 #define CHECK_CONTIGUOUS(x) TORCH_CHECK(x.is_contiguous(), #x " must be contiguous")
 #define CHECK_INPUT(x) CHECK_CUDA(x); CHECK_CONTIGUOUS(x)
@@ -101,6 +102,11 @@ void allreduce(int rank, int nRanks)
   printf("[MPI Rank %d] Success \n", myRank);
 }
 
+std::array<char, 128> get_local_id() {
+  ncclUniqueId id;
+  ncclGetUniqueId(&id);
+  return reinterpret_cast<std::array<char, 128>>(id.internal);
+}
 
 //ncclGetErrorString
 void init(int nDev) {
@@ -117,5 +123,6 @@ void init(int nDev) {
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
   m.def("init", &init, "init");
   m.def("allreduce", &allreduce, "allreduce");
+  m.def("get_local_id", &get_local_id, "get_local_id");
 }
 
