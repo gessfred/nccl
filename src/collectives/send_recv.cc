@@ -3,14 +3,13 @@
 #include "send_recv.h"
 #include <iostream>
 
-__global__ void sendKernel(int dst, float* sendbuff) {
-    struct CollectiveArgs args;
-    ncclSendKernel(dst, &args);
+//typedef ncclResult_t (*proxyProgressFunc_t)(struct ncclProxyArgs*);
+ncclResult_t sendStub(struct ncclProxyArgs* args) {
+    return ncclSuccess;
 }
 
-__global__ void recvKernel(int src, float* recvbuff) {
-    struct CollectiveArgs args;
-    ncclRecvKernel(src, &args);
+ncclResult_t recvStub(struct ncclProxyArgs* args) {
+    return ncclSuccess;
 }
 
 NCCL_API(ncclResult_t, ncclSend, const int dst, const void* sendbuff, size_t count, ncclDataType_t datatype,
@@ -19,8 +18,10 @@ ncclResult_t  ncclSend(const int dst, const void* sendbuff, size_t count, ncclDa
     ncclComm_t comm, cudaStream_t stream) {
     INFO(NCCL_INIT, "ncclSend"); 
     struct CollectiveArgs args;
-    //ncclSendCu(dst, &args);
-    sendKernel<<<1, 1>>>(dst, sendbuff);
+    struct ncclInfo info = {
+        sendbuff=sendbuff, recvbuff=recvbuff, count=count, datatype=datatype, ncclSum, comm=comm, stream=stream, /* Args */
+        chunkSteps=BROADCAST_CHUNKSTEPS, sliceSteps=BROADCAST_SLICESTEPS };
+    ncclEnqueueCheck(&info, sendStub);
     return ncclSuccess;
 }
 
@@ -30,7 +31,9 @@ ncclResult_t  ncclRecv(const int src, const void* recvbuff, size_t count, ncclDa
  ncclComm_t comm, cudaStream_t stream) {
     INFO(NCCL_INIT, "ncclRecv"); 
     struct CollectiveArgs args;
-    //ncclSendCu(src, &args);
-    recvKernel<<<1, 1>>>(src, recvbuff);
+    struct ncclInfo info = {
+        sendbuff=sendbuff, recvbuff=recvbuff, count=count, datatype=datatype, ncclSum, comm=comm, stream=stream, /* Args */
+        chunkSteps=BROADCAST_CHUNKSTEPS, sliceSteps=BROADCAST_SLICESTEPS };
+    ncclEnqueueCheck(&info, recvStub);
     return ncclSuccess;
 }

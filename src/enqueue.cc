@@ -84,7 +84,10 @@ ncclResult_t ncclLaunchCooperativeKernelMultiDevice(struct cudaLaunchParams *par
   return ncclSuccess;
 }
 
-ncclResult_t setupLaunch(struct ncclComm* comm, struct cudaLaunchParams* params) {
+/**
+ * setupLaunch "selects a channel?" and passes arguments somewhere
+ */ 
+ncclResult_t setupLaunch(struct ncclComm* comm, struct cudaLaunchParams* params, void* func) {
   params->gridDim.x = std::min<unsigned>(params->gridDim.x, comm->nChannels);
 
   // Set active = 2 for the last operation
@@ -100,7 +103,7 @@ ncclResult_t setupLaunch(struct ncclComm* comm, struct cudaLaunchParams* params)
   // As we pass that coll directly, we can free it immediately.
   coll->active = 0;
 
-  params->func = ncclKerns[coll->funcIndex];
+  params->func = (func == NULL) ? ncclKerns[coll->funcIndex] : func;
   return ncclSuccess;
 }
 
@@ -143,11 +146,15 @@ ncclResult_t ncclCpuBarrierOut(struct ncclComm* comm) {
   return ncclSuccess;
 }
 
-ncclResult_t ncclBarrierEnqueue(struct ncclComm* comm) {
+/**
+ * ncclBarrierEnqueue does group stuff and sets up the kernel
+ * 
+ */ 
+ncclResult_t ncclBarrierEnqueue(struct ncclComm* comm, void* func) {
   if (comm->nRanks == 1) return ncclSuccess;
   struct cudaLaunchParams* params = comm->myParams;
 
-  NCCLCHECK(setupLaunch(comm, params));
+  NCCLCHECK(setupLaunch(comm, params, func));
 
   // Use internal NCCL stream for CGMD/GROUP launch if required or if the user stream is NULL
   if (comm->launchMode == ncclComm::GROUP && (comm->groupCudaStream || comm->userStream == NULL)) {
@@ -177,6 +184,9 @@ ncclResult_t ncclBarrierEnqueue(struct ncclComm* comm) {
   return ncclSuccess;
 }
 
+/**
+ * ncclBarrierEnqueueWait launches the kernel(s). notably comm->params and transportstartproxy
+ */
 ncclResult_t ncclBarrierEnqueueWait(ncclComm_t comm) {
   if (comm->nRanks == 1) return ncclSuccess;
   // We can't print the CG mode before the first barrier happened.
@@ -381,6 +391,10 @@ static ncclResult_t computeColl(struct ncclInfo* info /* input */, struct ncclCo
   return ncclSuccess;
 }
 
+
+/**
+ * saveKernel copies sendbuff to recvbuff
+ */
 static ncclResult_t saveKernel(struct ncclInfo* info) {
   if (info->comm->nRanks == 1) {
     if (info->sendbuff != info->recvbuff)
@@ -434,7 +448,7 @@ static ncclResult_t saveKernel(struct ncclInfo* info) {
 }
 
 
-ncclResult_t ncclEnqueueCheck(struct ncclInfo* info) {
+ncclResult_t ncclEnqueueCheck(struct ncclInfo* info, void* func = NULL) {
   if (info->comm == NULL) return ncclInvalidArgument;
 
   INFO(NCCL_COLL,"%s: opCount %lx sendbuff %p recvbuff %p count %zi datatype %d op %d root %d comm %p [nranks=%d] stream %p",
@@ -454,6 +468,7 @@ ncclResult_t ncclEnqueueCheck(struct ncclInfo* info) {
     // Always register comm even in case of error to make sure ncclGroupEnd
     // cleans it up.
     NCCLCHECKGOTO(ncclAsyncColl(info->comm), ret, end);
+    //
     NCCLCHECKGOTO(saveKernel(info), ret, end);
 end:
     if (savedDev != -1) CUDACHECK(cudaSetDevice(savedDev));
@@ -462,7 +477,7 @@ end:
   } else {
     NCCLCHECK(ArgsCheck(info));
     NCCLCHECK(saveKernel(info));
-    NCCLCHECK(ncclBarrierEnqueue(info->comm));
+    NCCLCHECK(ncclBarrierEnqueue(info->comm, func));
     NCCLCHECK(ncclBarrierEnqueueWait(info->comm));
     NCCLCHECK(ncclEnqueueEvents(info->comm));
     return ncclSuccess;

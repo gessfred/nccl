@@ -106,6 +106,7 @@ static ncclResult_t SaveProxy(int peer, struct ncclProxyArgs* args) {
   NCCLCHECK(transportAllocateProxyArgs(connector->comm, &op));
   memcpy(op, args, sizeof(struct ncclProxyArgs));
   op->connector = connector;
+  /**************IMpORTANT****************/
   op->progress = connector->transportComm->proxy;
   op->state = ncclProxyOpReady;
   ProxyAppend(connector, op);
@@ -133,6 +134,11 @@ ncclResult_t transportSaveProxies(struct ncclProxyArgs* args, int pattern, int r
   return ncclSuccess;
 }
 
+/**
+ * persistentThread The queue is comm->op
+ * . The event is comm->proxyState
+ * 
+ */ 
 void* persistentThread(void *comm_) {
   struct ncclComm* comm = (struct ncclComm*)comm_;
   struct ncclProxyState* state = &comm->proxyState;
@@ -217,6 +223,9 @@ ncclResult_t transportStartProxy(struct ncclComm* comm) {
   return ncclSuccess;
 }
 
+/***
+ *  transportCreateProxy spawns a new "persistent" thread running with arg comm
+ */ 
 ncclResult_t transportCreateProxy(struct ncclComm* comm) {
   if (!comm->proxyThread) {
     comm->proxyState.cond = PTHREAD_COND_INITIALIZER;
