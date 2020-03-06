@@ -26,6 +26,7 @@ __device__ void ncclAllGatherRingKernel(struct CollectiveArgs* args) {
   const T * __restrict__ thisInput = (const T*)args->ThisInput;
   T * __restrict__ thisOutput = (T*)args->ThisOutput;
 
+/***********************IMPORTANT**************************/
   ncclPrimitives<UNROLL, ALLGATHER_CHUNKSTEPS/ALLGATHER_SLICESTEPS, ALLGATHER_SLICESTEPS, T, 1, 1, FUNC>
     prims(tid, args->nThreads, &ring->prev, &ring->next, thisOutput, stepSize, channel, comm, args->opCount);
 
@@ -41,6 +42,7 @@ __device__ void ncclAllGatherRingKernel(struct CollectiveArgs* args) {
 
     // step 0: push data to next GPU
     rankDest = ring->devUserRanks[0];
+    /***********************IMPORTANT**************************/
     offset = chunkOffset + rankDest * size;
 
     if (thisInput + chunkOffset == thisOutput + offset) { // In place
