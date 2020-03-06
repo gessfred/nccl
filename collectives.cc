@@ -183,5 +183,6 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
   m.def("init", &init, "init");
   m.def("allreduce", &allreduce, "allreduce");
   m.def("get_local_id", &get_local_id, "get_local_id");
+  m.def("send", &send, "send");
 }
 
