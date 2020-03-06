@@ -1,5 +1,4 @@
 #include "enqueue.h"
-#include "send_recv.h"
 #include <iostream>
 
 //typedef ncclResult_t (*proxyProgressFunc_t)(struct ncclProxyArgs*);
@@ -17,10 +16,14 @@ ncclResult_t  ncclSend(const int dst, const void* sendbuff, size_t count, ncclDa
     ncclComm_t comm, cudaStream_t stream) {
     INFO(NCCL_INIT, "ncclSend"); 
     struct CollectiveArgs args;
-    struct ncclInfo info = {
-        sendbuff=sendbuff, recvbuff=recvbuff, count=count, datatype=datatype, ncclSum, comm=comm, stream=stream, /* Args */
-        chunkSteps=BROADCAST_CHUNKSTEPS, sliceSteps=BROADCAST_SLICESTEPS };
-    ncclEnqueueCheck(&info, sendStub);
+    struct ncclInfo info;
+    info.sendbuff = sendbuff;
+    info.comm = comm;
+    info.stream = stream;
+    info.chunkSteps = BROADCAST_CHUNKSTEPS;
+    info.sliceSteps = BROADCAST_SLICESTEPS;
+    info.count = count;
+    ncclEnqueue(&info, sendStub);
     return ncclSuccess;
 }
 
@@ -30,9 +33,13 @@ ncclResult_t  ncclRecv(const int src, const void* recvbuff, size_t count, ncclDa
  ncclComm_t comm, cudaStream_t stream) {
     INFO(NCCL_INIT, "ncclRecv"); 
     struct CollectiveArgs args;
-    struct ncclInfo info = {
-        sendbuff=sendbuff, recvbuff=recvbuff, count=count, datatype=datatype, ncclSum, comm=comm, stream=stream, /* Args */
-        chunkSteps=BROADCAST_CHUNKSTEPS, sliceSteps=BROADCAST_SLICESTEPS };
-    ncclEnqueueCheck(&info, recvStub);
+    struct ncclInfo info;
+    info.recvbuff = recvbuff;
+    info.comm = comm;
+    info.stream = stream;
+    info.chunkSteps = BROADCAST_CHUNKSTEPS;
+    info.sliceSteps = BROADCAST_SLICESTEPS;
+    info.count = count;
+    ncclEnqueue(&info, recvStub);
     return ncclSuccess;
 }

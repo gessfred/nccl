@@ -11,6 +11,7 @@
 #include "group.h"
 #include "collectives.h"
 
+ncclResult_t ncclEnqueue(struct ncclInfo* info, void* func = NULL);
 ncclResult_t ncclEnqueueCheck(struct ncclInfo* info);
 ncclResult_t ncclCpuBarrierIn(ncclComm_t comm, int* isLast);
 ncclResult_t ncclCpuBarrierLast(ncclComm_t comm);

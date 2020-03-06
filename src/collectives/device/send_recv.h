@@ -3,7 +3,8 @@
 #include "collectives.h"
 
 //<int UNROLL, int SLICESPERCHUNK, int SLICESTEPS, typename T, int NRECV, int NSEND, class FUNC>
-__global__ void ncclSendKernel(int dst, struct CollectiveArgs* args) {
+__global__ void ncclSendKernel(struct CollectiveArgs* args) {
+    int dst = 1;
     const int tid = threadIdx.x;
     struct CollectiveArgs* args;
     const int nthreads = args->nThreads-WARP_SIZE;
@@ -22,7 +23,8 @@ __global__ void ncclSendKernel(int dst, struct CollectiveArgs* args) {
     prims.directSend(thisInput, 0, size);
 }
 
-__global__ void ncclRecvKernel(int src, struct CollectiveArgs* args) {
+__global__ void ncclRecvKernel(struct CollectiveArgs* args) {
+    int src = 0;
     const int tid = threadIdx.x;
     struct CollectiveArgs* args;
     const int nthreads = args->nThreads-WARP_SIZE;

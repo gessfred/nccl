@@ -393,7 +393,7 @@ static ncclResult_t computeColl(struct ncclInfo* info /* input */, struct ncclCo
 
 
 /**
- * saveKernel copies sendbuff to recvbuff
+ * saveKernel copies sendbuff to recvbuff. Saves proxies
  */
 static ncclResult_t saveKernel(struct ncclInfo* info) {
   if (info->comm->nRanks == 1) {
@@ -447,8 +447,43 @@ static ncclResult_t saveKernel(struct ncclInfo* info) {
   return ncclSuccess;
 }
 
+ncclResult_t ncclEnqueue(struct ncclInfo* info, void* func) {
+  if (info->comm == NULL) return ncclInvalidArgument;
 
-ncclResult_t ncclEnqueueCheck(struct ncclInfo* info, void* func = NULL) {
+  INFO(NCCL_COLL,"%s: opCount %lx sendbuff %p recvbuff %p count %zi datatype %d op %d root %d comm %p [nranks=%d] stream %p",
+       info->opName, info->comm->opCount, info->sendbuff, info->recvbuff, info->count,
+       info->datatype, info->op, info->root, info->comm, info->comm->nRanks, info->stream);
+
+  // Launch asynchronously if needed
+  if (ncclAsyncMode()) {
+    ncclResult_t ret = ncclSuccess;
+    int savedDev = -1;
+    if (info->comm->checkPointers) {
+      CUDACHECKGOTO(cudaGetDevice(&savedDev), ret, end);
+      CUDACHECKGOTO(cudaSetDevice(info->comm->cudaDev), ret, end);
+    }
+    // Check arguments
+    INFO(NCCL_ALL, "args checking...");
+    // Always register comm even in case of error to make sure ncclGroupEnd
+    // cleans it up.
+    NCCLCHECKGOTO(ncclAsyncColl(info->comm), ret, end);
+    //
+    NCCLCHECKGOTO(saveKernel(info), ret, end);
+end:
+    if (savedDev != -1) CUDACHECK(cudaSetDevice(savedDev));
+    ncclAsyncErrCheck(ret);
+    return ret;
+  } else {
+    INFO(NCCL_ALL, "args checking...");
+    NCCLCHECK(saveKernel(info));
+    NCCLCHECK(ncclBarrierEnqueue(info->comm));
+    NCCLCHECK(ncclBarrierEnqueueWait(info->comm));
+    NCCLCHECK(ncclEnqueueEvents(info->comm));
+    return ncclSuccess;
+  }
+}
+
+ncclResult_t ncclEnqueueCheck(struct ncclInfo* info) {
   if (info->comm == NULL) return ncclInvalidArgument;
 
   INFO(NCCL_COLL,"%s: opCount %lx sendbuff %p recvbuff %p count %zi datatype %d op %d root %d comm %p [nranks=%d] stream %p",
@@ -477,7 +512,7 @@ end:
   } else {
     NCCLCHECK(ArgsCheck(info));
     NCCLCHECK(saveKernel(info));
-    NCCLCHECK(ncclBarrierEnqueue(info->comm, func));
+    NCCLCHECK(ncclBarrierEnqueue(info->comm));
     NCCLCHECK(ncclBarrierEnqueueWait(info->comm));
     NCCLCHECK(ncclEnqueueEvents(info->comm));
     return ncclSuccess;
