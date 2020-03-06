@@ -23,7 +23,7 @@ ncclResult_t  ncclSend(const int dst, const void* sendbuff, size_t count, ncclDa
     info.chunkSteps = BROADCAST_CHUNKSTEPS;
     info.sliceSteps = BROADCAST_SLICESTEPS;
     info.count = count;
-    ncclEnqueue(&info, sendStub);
+    ncclEnqueue(&info, (void*)sendStub);
     return ncclSuccess;
 }
 
@@ -40,6 +40,6 @@ ncclResult_t  ncclRecv(const int src, const void* recvbuff, size_t count, ncclDa
     info.chunkSteps = BROADCAST_CHUNKSTEPS;
     info.sliceSteps = BROADCAST_SLICESTEPS;
     info.count = count;
-    ncclEnqueue(&info, recvStub);
+    ncclEnqueue(&info, (void*)recvStub);
     return ncclSuccess;
 }
