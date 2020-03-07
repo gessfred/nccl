@@ -447,7 +447,36 @@ static ncclResult_t saveKernel(struct ncclInfo* info) {
   return ncclSuccess;
 }
 
-ncclResult_t ncclEnqueue(struct ncclInfo* info, void* func) {
+ncclResult_t ncclExec(ncclComm_t* comm) {
+  //set device
+  INFO(NCCL_ALL, "setting device");
+  if(info->comm->checkPointers) {
+      cudaGetDevice(&savedDev);
+      cudaSetDevice(info->comm->cudaDev);
+  }
+  //launch kernel
+  NCCLCHECK(ncclCpuBarrierOut(comm));
+
+  struct cudaLaunchParams *params = comm->myParams;
+  if (comm->launchMode == ncclComm::PARALLEL) {
+    CUDACHECK(cudaLaunchKernel(params->func, params->gridDim, params->blockDim, params->args, params->sharedMem, params->stream));
+  }
+  // Start the network proxies as soon as the kernel has been launched. We can't
+  // perform any CUDA call between the two or having a cudaFree between the CUDA
+  // launch and the transportStartProxy call could cause a deadlock.
+  // Also, starting the proxies after the CUDA launch seems to be better for
+  // performance (latency).
+  for (int r=0; r<params->gridDim.x; r++) {
+    struct ncclChannel* channel = comm->channels+r;
+    channel->collStart = channel->collFifoTail;
+    channel->collCount = 0;
+  }
+  params->gridDim.x = params->blockDim.x = 0;
+  comm->lastOpCount = comm->opCount;
+  NCCLCHECK(transportStartProxy(comm));
+}
+
+/*ncclResult_t ncclEnqueue(struct ncclInfo* info, void* func) {
   if (info->comm == NULL) return ncclInvalidArgument;
 
   INFO(NCCL_COLL,"%s: opCount %lx sendbuff %p recvbuff %p count %zi datatype %d op %d root %d comm %p [nranks=%d] stream %p",
@@ -481,7 +510,7 @@ end:
     NCCLCHECK(ncclEnqueueEvents(info->comm));
     return ncclSuccess;
   }
-}
+}*/
 
 ncclResult_t ncclEnqueueCheck(struct ncclInfo* info) {
   if (info->comm == NULL) return ncclInvalidArgument;
