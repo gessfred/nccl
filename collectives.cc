@@ -82,8 +82,8 @@ void send(int rank, int nRanks, std::array<char, 128> uuid, int dst)  {
 
 
   //communicating using NCCL
-  NCCLCHECK(ncclSend(dst, (const void*)sendbuff, size, ncclFloat,
-        comm, s));
+  //NCCLCHECK(ncclSend(dst, (const void*)sendbuff, size, ncclFloat,
+  //      comm, s));
 
 
   //completing NCCL operation by synchronizing on the CUDA stream
