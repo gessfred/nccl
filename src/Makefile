@@ -70,7 +70,7 @@ $(INCDIR)/nccl.h : nccl.h.in
 $(LIBDIR)/$(LIBTARGET): $(LIBOBJ) $(DEVICELIB)
 	@printf "Linking    %-35s > %s\n" $(LIBTARGET) $@
 	mkdir -p $(LIBDIR)
-	$(CXX) $(CXXFLAGS) -pg -shared -Wl,--no-as-needed -Wl,-soname,$(LIBSONAME) -o $@ $(LIBOBJ) $(DEVICELIB) $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) -g -shared -Wl,--no-as-needed -Wl,-soname,$(LIBSONAME) -o $@ $(LIBOBJ) $(DEVICELIB) $(LDFLAGS)
 	ln -sf $(LIBSONAME) $(LIBDIR)/$(LIBNAME)
 	ln -sf $(LIBTARGET) $(LIBDIR)/$(LIBSONAME)
 
@@ -110,8 +110,8 @@ $(PKGDIR)/%.pc : %.pc
 $(OBJDIR)/%.o : %.cc
 	@printf "Compiling  %-35s > %s\n" $< $@
 	mkdir -p `dirname $@`
-	$(CXX) -I. -I$(INCDIR) $(CXXFLAGS) -pg -Iinclude -c $< -o $@
-	@$(CXX) -I. -I$(INCDIR) $(CXXFLAGS) -pg -Iinclude -M $< > $(@:%.o=%.d.tmp)
+	$(CXX) -I. -I$(INCDIR) $(CXXFLAGS) -g -Iinclude -c $< -o $@
+	@$(CXX) -I. -I$(INCDIR) $(CXXFLAGS) -g -Iinclude -M $< > $(@:%.o=%.d.tmp)
 	@sed "0,/^.*:/s//$(subst /,\/,$@):/" $(@:%.o=%.d.tmp) > $(@:%.o=%.d)
 	@sed -e 's/.*://' -e 's/\\$$//' < $(@:%.o=%.d.tmp) | fmt -1 | \
                 sed -e 's/^ *//' -e 's/$$/:/' >> $(@:%.o=%.d)
