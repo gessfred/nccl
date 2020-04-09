@@ -8,7 +8,7 @@ CUDA_HOME ?= /usr/local/cuda
 PREFIX ?= /usr/local
 VERBOSE ?= 0
 KEEP ?= 0
-DEBUG ?= 0
+DEBUG ?= 1
 TRACE ?= 0
 PROFAPI ?= 0
 
@@ -42,7 +42,7 @@ else
 endif
 #$(info NVCC_GENCODE is ${NVCC_GENCODE})
 
-CXXFLAGS   := -DCUDA_MAJOR=$(CUDA_MAJOR) -DCUDA_MINOR=$(CUDA_MINOR) -fPIC -fvisibility=hidden \
+CXXFLAGS   := -g -DCUDA_MAJOR=$(CUDA_MAJOR) -DCUDA_MINOR=$(CUDA_MINOR) -fPIC -fvisibility=hidden \
               -Wall -Wno-unused-function -Wno-sign-compare -std=c++11 -Wvla \
               -I $(CUDA_INC) \
               $(CXXFLAGS)
